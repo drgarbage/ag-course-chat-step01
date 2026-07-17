@@ -1,0 +1,51 @@
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="https://agcourse.web.app/stylesheets/chat.css">
+
+<body>
+  <div id="chatArea"></div>
+  <div id="toolbar">
+    <input id="userInput" />
+    <button onclick="send()">送出</button>
+  </div>
+</body>
+
+<script type="module">
+  import { GoogleGenerativeAI } from 'https://esm.run/@google/generative-ai';
+
+  const genAI = new GoogleGenerativeAI('YOUR_API_KEY_HERE');
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+  // 輔助函式：插入對話
+  function say(role, text) {
+    const p = document.createElement('p');
+    p.classList.add(role);
+    p.textContent = text;
+    chatArea.appendChild(p);
+    p.scrollIntoView(false);
+    return p;
+  }
+
+  window.send = async () => {
+    const text = userInput.value.trim();
+    if (!text) return;
+
+    userInput.value = '';
+    say('user', text);
+    const message = say('ai', '思考中...');
+
+    try {
+      const result = await model.generateContentStream(text);
+      message.textContent = '';
+
+      for await (const chunk of result.stream) {
+        message.textContent += chunk.text();
+        message.scrollIntoView(false);
+      }
+    } catch (error) {
+      message.textContent = '出錯: ' + error.message;
+    }
+  }
+
+
+</script>
